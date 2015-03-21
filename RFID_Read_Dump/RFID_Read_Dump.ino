@@ -24,8 +24,10 @@
 #define SS_PIN 53
 #define RST_PIN 5
 MFRC522 mfrc522(SS_PIN, RST_PIN);	// Create MFRC522 instance.
+int RFIDIntrupNumber = 1;
 
 void setup() {
+    attachInterrupt(RFIDIntrupNumber, ReadRfidDump, CHANGE);
 	Serial.begin(9600);	// Initialize serial communications with the PC
 	SPI.begin();			// Init SPI bus
 	mfrc522.PCD_Init();	// Init MFRC522 card
@@ -39,10 +41,42 @@ void loop() {
 	}
 
 	// Select one of the cards
+
+}
+
+void ReadRfidDump()
+{
 	if ( ! mfrc522.PICC_ReadCardSerial()) {
 		return;
 	}
 
 	// Dump debug info about the card. PICC_HaltA() is automatically called.
-	mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
+	mfrc522.PICC_DumpToSerial(&(mfrc522.uid));  
 }
+
+void ReadRfidID()
+{
+    if (rfid.isCard()) 
+    {                                     //找尋卡片
+          if (rfid.readCardSerial()) 
+          {                       //取得卡片的ID+CRC校驗碼
+                        //第0~3個byte:卡片ID
+                        Serial.println(" ");
+                        Serial.print("RFID Card Number is : ");
+			Serial.print(rfid.serNum[0],HEX);
+                        Serial.print(" , ");
+			Serial.print(rfid.serNum[1],HEX);
+                        Serial.print(" , ");
+			Serial.print(rfid.serNum[2],HEX);
+                        Serial.print(" , ");
+			Serial.println(rfid.serNum[3],HEX);
+                        //第4個byte:CRC校驗位元
+                        Serial.print("CRC is : ");
+                        Serial.println(rfid.serNum[4],HEX);
+          }
+          
+    }   
+    rfid.halt();        //命令卡片進入休眠狀態
+  //  delay(500);         //延時0.5秒 
+}
+
